@@ -190,7 +190,7 @@ void c_array::addElem(int index, int key)
 void c_array::swap(int a, int b)
 {
 	if ((a < 0) || (a >= n)) throw 2;
-	if ((b < 0) || (b >= n)) throw 2;
+	if ((b < 0) || (b >= n)) throw 3;
 
 	int c = A[a];
 	A[a] = A[b];
@@ -504,10 +504,14 @@ istream& operator >>(istream& r, c_array& Mas)
 int main()
 {
 	srand(time(NULL));
-	c_array B, A;
-	B.randArray(10);
-	A.randArray(5);
+	int a[3] = { 1, 4, 3 };
+	c_array A(a, 4);
+	
+
+	A.randArray(20);
 
 	//cin >> A;
 	cout << A;
+
+
 }
