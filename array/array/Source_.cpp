@@ -5,8 +5,32 @@ using namespace std;
 const int DEFAULT_MEM = 100; // количество элементов массива по умолчанию
 const int DOP_MEM = 10; // количество дополнительных элементов, создаваемых при выделении памяти 
 const int MAX_NUMBER = 99; // максимально возможный элемент массива при случайном заполнении
-const int EMPTY_ELEM = 0; // число, записываемое в "пустые" ячейки, оставшиеся после сдвига;
+const int EMPTY_ELEM = 0; // число, записываемое в  ячейки, для которых не определено конкретно что в них должно быть;
 
+/* коды исключений:
+конструктор с параметрами:
+0 - в конструктор введено отрицательное n
+
+addElem :
+1 - получена отрицательная позиция;
+
+swap :
+2 - первый операнд выходит за границы массива
+3 - второй операнд выходит за границы массива
+
+shiftRight :
+4 - нельзя сдвинуть на отрицательное число
+
+shiftRightSave :
+5 - нельзя сдвинуть на отрицательное число
+
+shiftLeft :
+6 - нельзя сдвинуть на отрицательное число 
+
+operator [] :
+7 - индекс выходит за границы массива
+
+*/
 class c_array
 {
 	int* A;
@@ -68,6 +92,8 @@ c_array::c_array()
 //конструктор с параметрами
 c_array::c_array(int* a, int count)
 {
+	if (count < 0) throw 0;
+
 	mem = count + DOP_MEM;
 	A = new int[mem];
 	n = count;
@@ -132,13 +158,40 @@ void  c_array::output()
 //добавление элемента на заданную позицию
 void c_array::addElem(int index, int key)
 {
-	if ((index > n + 1) && (index < 0)) throw 0;
-	else A[index] = key;
+	if (index < 0) throw 1;
+	
+	if (index < n)
+	{
+		A[index] = key;
+	}
+	else
+		if (index < mem)
+		{
+			n = index;
+			for (int i = n; i < index; i++) A[i] = EMPTY_ELEM;
+			A[index] = key;
+		}
+		else
+			if(index >= mem)
+			{
+				int* a = new int[index + DOP_MEM];
+				for (int i = 0; i < n; i++) a[i] = A[i];
+				for (int i = n; i < index; i++) a[i] = EMPTY_ELEM;
+				a[index] = key;
+				delete A;
+				A = a;
+				n = index + 1;
+				mem = index + DOP_MEM + 1;
+			}
+	return;
 }
 
 //меняются местами 2 элемента массива
 void c_array::swap(int a, int b)
 {
+	if ((a < 0) || (a >= n)) throw 2;
+	if ((b < 0) || (b >= n)) throw 2;
+
 	int c = A[a];
 	A[a] = A[b];
 	A[b] = c;
@@ -165,7 +218,7 @@ void c_array::sortingAsc()
 //сдвиг (вправо(+ версия сдвига вправо без потери элементов) и влево)
 void c_array::shiftRight(int count, int index)
 {
-	if (count < 0) throw 0;
+	if (count < 0) throw 4;
 	if (count > n - index) count = n - index;
 
 	for (int i = n - 1; i >= (index + count); i--) A[i] = A[i - count];
@@ -177,7 +230,7 @@ void c_array::shiftRight(int count, int index)
 
 void c_array::shiftRightSave(int count, int index)
 {
-	if (count < 0) throw 0;
+	if (count < 0) throw 5;
 
 	if (count + n > mem)
 	{
@@ -204,7 +257,7 @@ void c_array::shiftRightSave(int count, int index)
 
 void c_array::shiftLeft(int count, int index)
 {
-	if (count < 0) throw 0;
+	if (count < 0) throw 6;
 	if (count > index + 1) count = index + 1;
 
 	for (int i = 0; i <= (index - count); i++) A[i] = A[i + count];
@@ -310,7 +363,7 @@ void c_array::randArrayAsc(int count)
 // взятие ссылки на элемент
 int& c_array::operator [](int index)
 {
-	if ((index < 0) || (index >= n)) throw 0;
+	if ((index < 0) || (index >= n)) throw 7;
 	return A[index];
 }
 
@@ -455,6 +508,6 @@ int main()
 	B.randArray(10);
 	A.randArray(5);
 
-	cin >> A;
+	//cin >> A;
 	cout << A;
 }
