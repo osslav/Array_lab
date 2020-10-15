@@ -30,20 +30,27 @@ shiftLeft :
 operator [] :
 7 - индекс выходит за границы массива
 
+operator - :
+8 - попытка удалить отрицательный индекс
+
+deleteIndex :
+9 - попытка удалить отрицательный индекс
 */
-class c_array
+class Array
 {
-	int* A;
-	int n, mem;
+	int* array_;
+	int count_, memory_;
 
 public:
-	c_array();
-	c_array(int* a, int count);
-	c_array(const c_array& copy);
+	Array();
+	Array(int* a, int count);
+	Array(const Array& copy);
 
-	~c_array() { delete A; };
+	~Array() { delete array_; };
 
 	int findFirstKey(int key);
+	int findMinKey();
+	int findMaxKey();
 
 	void input();
 	void output();
@@ -54,411 +61,448 @@ public:
 	void sortingDesc();
 	void sortingAsc();
 
-	void shiftRight(int count, int index);
-	void shiftRightSave(int count, int index);
-	void shiftLeft(int count, int index);
+	void shiftRight(int count, int index, int emptyElem = EMPTY_ELEM);
+	void shiftRightSave(int count, int index, int emptyElem = EMPTY_ELEM);
+	void shiftLeft(int count, int index, int emptyElem = EMPTY_ELEM);
 
-	c_array& operator -(int key);
-	c_array& operator -=(int index);
+	Array operator -(int key);
+	void deleteKey(int key);
 
-	void operator =(const c_array& newArray);
+	void operator -=(int index);
+	void deleteIndex(int index);
+
+	void operator =(const Array& newArray);
 
 	void randArray(int count);
 	void randArrayDesc(int count);
 	void randArrayAsc(int count);
 
 	int& operator [](int index);
-	c_array& operator +(int key);
-	c_array& operator +=(int key);
+	Array operator +(int key);
+	void operator +=(int key);
 
-	c_array& operator +(const c_array& Mas);
-	c_array& operator +=(const c_array& Mas);
+	Array operator +(const Array& Mas);
+	void operator +=(const Array& Mas);
 
-	bool operator ==(const c_array Mas);
-	bool operator !=(const c_array Mas);
+	bool operator ==(const Array& Mas);
+	bool operator !=(const Array& Mas);
 
-	friend ostream& operator <<(ostream& r, c_array& Mas);
-	friend istream& operator >>(istream& r, c_array& Mas);
+	friend ostream& operator <<(ostream& r, Array& Mas);
+	friend istream& operator >>(istream& r, Array& Mas);
 };
 
 //конструктор по умолчанию
-c_array::c_array()
+Array::Array()
 {
-	A = new int[DEFAULT_MEM];
-	mem = DEFAULT_MEM;
-	n = 0;
+	array_ = new int[DEFAULT_MEM];
+	memory_ = DEFAULT_MEM;
+	count_ = 0;
 }
 
 //конструктор с параметрами
-c_array::c_array(int* a, int count)
+Array::Array(int* a, int count)
 {
 	if (count < 0) throw 0;
 
-	mem = count + DOP_MEM;
-	A = new int[mem];
-	n = count;
+	memory_ = count + DOP_MEM;
+	array_ = new int[memory_];
+	count_ = count;
 
-	for (int i = 0; i < n; i++) A[i] = a[i];
+	for (int i = 0; i < count_; i++) array_[i] = a[i];
 }
 
 //конструктор копирования
-c_array::c_array(const c_array& copy)
+Array::Array(const Array& copy)
 {
-	mem = copy.mem;
-	n = copy.n;
-	A = new int[mem];
-	for (int i = 0; i < n; i++) A[i] = copy.A[i];
+	memory_ = copy.memory_;
+	count_ = copy.count_;
+	array_ = new int[memory_];
+	for (int i = 0; i < count_; i++) array_[i] = copy.array_[i];
 }
 
 //поиск индекса первого вхождения числа
-int c_array::findFirstKey(int key)
+int Array::findFirstKey(int key)
 {
-	for (int i = 0; i < n; i++)
-		if (key == A[i]) return i;
+	for (int i = 0; i < count_; i++)
+		if (key == array_[i]) return i;
 
 	return -1;
 }
 
+//поиск минимального и максимального элемента(возвращают -1 если массив пуст)
+int Array::findMinKey()
+{
+	if (count_ == 0) return -1;
+
+	int indexMin = 0;
+	for (int i = 1; i < count_; i++)
+		if (array_[indexMin] > array_[i]) indexMin = i;
+	
+	return indexMin;
+}
+
+int Array::findMaxKey()
+{
+	if (count_ == 0) return -1;
+
+	int indexMax = 0;
+	for (int i = 1; i < count_; i++)
+		if (array_[indexMax] < array_[i]) indexMax = i;
+
+	return indexMax;
+}
 //ввод-вывод (в консоль)
-void  c_array::input()
+void  Array::input()
 {
 	cout << "Enter number of elements: ";
-	cin >> n;
-	while (n < 0)
+	cin >> count_;
+	while (count_ < 0)
 	{
 		cout << "Error. This number must >= 0. Enter here again: ";
-		cin >> n;
+		cin >> count_;
 	}
 
-	if (n > mem)
+	if (count_ > memory_)
 	{
-		delete A;
-		mem = n + DOP_MEM;
-		A = new int[mem];
+		delete array_;
+		memory_ = count_ + DOP_MEM;
+		array_ = new int[memory_];
 	}
 
 	cout << "\nEnter array(enter space between numbers): ";
-	for (int i = 0; i < n; i++) cin >> A[i];
-
-	return;
+	for (int i = 0; i < count_; i++) cin >> array_[i];
 }
 
-void  c_array::output()
+void  Array::output()
 {
-	if (n > 0)
+	if (count_ > 0)
 	{
 		cout << "Array: ";
-		for (int i = 0; i < n; i++) cout << A[i] << "  ";
-		cout << "\n" << n << " slots out of " << mem << " occupied.\n\n";
+		for (int i = 0; i < count_; i++) cout << array_[i] << "  ";
+		cout << "\n" << count_ << " slots out of " << memory_ << " occupied.\n\n";
 	}
-	else cout << "Array is empty. " << mem << " slots avilable.\n\n";
-	return;
+	else cout << "Array is empty. " << memory_ << " slots avilable.\n\n";
 }
 
 //добавление элемента на заданную позицию
-void c_array::addElem(int index, int key)
+void Array::addElem(int index, int key)
 {
 	if (index < 0) throw 1;
 	
-	if (index < n)
+	if (index < count_)
 	{
-		A[index] = key;
+		this->shiftRightSave(1, index);
+		array_[index] = key;
 	}
 	else
-		if (index < mem)
+		if (index < memory_)
 		{
-			n = index;
-			for (int i = n; i < index; i++) A[i] = EMPTY_ELEM;
-			A[index] = key;
+			for (int i = count_; i < index; i++) array_[i] = EMPTY_ELEM;
+			count_ = index + 1;
+			array_[index] = key;
 		}
 		else
-			if(index >= mem)
+			if(index >= memory_)
 			{
 				int* a = new int[index + DOP_MEM];
-				for (int i = 0; i < n; i++) a[i] = A[i];
-				for (int i = n; i < index; i++) a[i] = EMPTY_ELEM;
+				for (int i = 0; i < count_; i++) a[i] = array_[i];
+				for (int i = count_; i < index; i++) a[i] = EMPTY_ELEM;
 				a[index] = key;
-				delete A;
-				A = a;
-				n = index + 1;
-				mem = index + DOP_MEM + 1;
+				delete array_;
+				array_ = a;
+				count_ = index + 1;
+				memory_ = index + DOP_MEM + 1;
 			}
-	return;
 }
 
 //меняются местами 2 элемента массива
-void c_array::swap(int a, int b)
+void Array::swap(int a, int b)
 {
-	if ((a < 0) || (a >= n)) throw 2;
-	if ((b < 0) || (b >= n)) throw 3;
+	if ((a < 0) || (a >= count_)) throw 2;
+	if ((b < 0) || (b >= count_)) throw 3;
 
-	int c = A[a];
-	A[a] = A[b];
-	A[b] = c;
-	return;
+	int c = array_[a];
+	array_[a] = array_[b];
+	array_[b] = c;
 }
 
 //сортировки (по убыванию и возрастанию)
-void c_array::sortingDesc()
+void Array::sortingDesc()
 {
-	for (int i = n - 1; i > 0; i--)
+	for (int i = count_ - 1; i > 0; i--)
 		for (int j = 0; j < i; j++)
-			if (A[j] > A[j + 1]) swap(j, j + 1);
-	return;
+			if (array_[j] > array_[j + 1]) swap(j, j + 1);
 }
 
-void c_array::sortingAsc()
+void Array::sortingAsc()
 {
-	for (int i = 0; i < n; i++)
-		for (int j = n - 1; j > i; j--)
-			if (A[j] > A[j - 1]) swap(j, j - 1);
-	return;
+	for (int i = 0; i < count_; i++)
+		for (int j = count_ - 1; j > i; j--)
+			if (array_[j] > array_[j - 1]) swap(j, j - 1);
 }
 
 //сдвиг (вправо(+ версия сдвига вправо без потери элементов) и влево)
-void c_array::shiftRight(int count, int index)
+void Array::shiftRight(int count, int index, int emptyElem)
 {
 	if (count < 0) throw 4;
-	if (count > n - index) count = n - index;
+	if (count > count_ - index) count = count_ - index;
 
-	for (int i = n - 1; i >= (index + count); i--) A[i] = A[i - count];
+	for (int i = count_ - 1; i >= (index + count); i--) array_[i] = array_[i - count];
 
-	for (int i = 0; i < count; i++) A[index + i] = EMPTY_ELEM;
-
-	return;
+	for (int i = 0; i < count; i++) array_[index + i] = emptyElem;
 }
 
-void c_array::shiftRightSave(int count, int index)
+void Array::shiftRightSave(int count, int index, int emptyElem)
 {
 	if (count < 0) throw 5;
 
-	if (count + n > mem)
+	if (count + count_ > memory_)
 	{
-		mem = n + count + DOP_MEM;
-		n += count;
-		int* newArr = new int[mem];
+		memory_ = count_ + count + DOP_MEM;
+		count_ += count;
+		int* newArr = new int[memory_];
 		int i = 0;
 
-		for (; i < index; i++) newArr[i] = A[i];
-		for (; i < index + count; i++) newArr[i] = EMPTY_ELEM;
-		for (; i < n; i++) newArr[i] = A[i - count];
+		for (; i < index; i++) newArr[i] = array_[i];
+		for (; i < index + count; i++) newArr[i] = emptyElem;
+		for (; i < count_; i++) newArr[i] = array_[i - count];
 
-		delete A;
-		A = newArr;
+		delete array_;
+		array_ = newArr;
 	}
 	else
 	{
-		n += count;
-		for (int i = n - 1; i >= (index + count); i--) A[i] = A[i - count];
-		for (int i = 0; i < count; i++) A[index + i] = EMPTY_ELEM;
+		count_ += count;
+		for (int i = count_ - 1; i >= (index + count); i--) array_[i] = array_[i - count];
+		for (int i = 0; i < count; i++) array_[index + i] = emptyElem;
 	}
-	return;
 }
 
-void c_array::shiftLeft(int count, int index)
+void Array::shiftLeft(int count, int index, int emptyElem)
 {
 	if (count < 0) throw 6;
 	if (count > index + 1) count = index + 1;
 
-	for (int i = 0; i <= (index - count); i++) A[i] = A[i + count];
+	for (int i = 0; i <= (index - count); i++) array_[i] = array_[i + count];
 
-	for (int i = 0; i < count; i++) A[index - i] = EMPTY_ELEM;
-
-	return;
+	for (int i = 0; i < count; i++) array_[index - i] = emptyElem;
 }
 
 //удаление первого вхождения ключа
-c_array& c_array::operator -(int key)
+Array Array::operator -(int key)
 {
 	int index = this->findFirstKey(key);
-	c_array* result = new c_array(A, n);
+	Array result(*this);
 
 	if (index != -1)
 	{
-		for (int i = index; i < n - 1; i++) result->A[i] = result->A[i + 1];
-		result->n--;
+		for (int i = index; i < count_ - 1; i++) result.array_[i] = result.array_[i + 1];
+		result.count_--;
 	}
-	return *result;
+	return result;
 }
+
+void Array::deleteKey(int key)
+{
+	int index = this->findFirstKey(key);
+
+	if (index != -1)
+	{
+		for (int i = index; i < count_ - 1; i++) array_[i] = array_[i + 1];
+		count_--;
+	}
+}
+
 
 //удаление элемента по идексу
-c_array& c_array::operator -=(int index)
+void Array::operator -=(int index)
 {
-	c_array* result = new c_array(A, n);
+	if (index < 0) throw 8;
 
-	if (index < 0) throw 0;
-
-	if (index < n)
+	if (index < count_)
 	{
-		for (int i = index; i < n - 1; i++) result->A[i] = result->A[i + 1];
-		result->n--;
+		for (int i = index; i < count_ - 1; i++) array_[i] = array_[i + 1];
+		count_--;
 	}
-
-
-	return *result;
 }
 
-//операция присвоения
-void c_array::operator =(const c_array& newArray)
+void Array::deleteIndex(int index)
 {
-	delete A;
+	if (index < 0) throw 9;
 
-	mem = newArray.mem;
-	n = newArray.n;
-	A = new int[mem];
-	for (int i = 0; i < n; i++) A[i] = newArray.A[i];
+	if (index < count_)
+	{
+		for (int i = index; i < count_ - 1; i++) array_[i] = array_[i + 1];
+		count_--;
+	}
+}
+
+
+//операция присвоения
+void Array::operator =(const Array& newArray)
+{
+	if (this != &newArray)
+	{
+		delete array_;
+
+		memory_ = newArray.memory_;	
+		count_ = newArray.count_;	
+		array_ = new int[memory_];	
+		for (int i = 0; i < count_; i++) array_[i] = newArray.array_[i];
+	}
 }
 
 //заполнение массива случайными числами (полностью случайным, по возрастанию, по убыванию)
-void c_array::randArray(int count)
+void Array::randArray(int count)
 {
 	if (count < 0) throw 0;
 
-	if (count > mem)
+	if (count > memory_)
 	{
-		delete A;
-		mem = count + DOP_MEM;
-		A = new int[mem];
+		delete array_;
+		memory_ = count + DOP_MEM;
+		array_ = new int[memory_];
 	}
 
-	n = count;
-	for (int i = 0; i < n; i++) A[i] = rand() % (MAX_NUMBER + 1);
-	return;
+	count_ = count;
+	for (int i = 0; i < count_; i++) array_[i] = rand() % (MAX_NUMBER + 1);
 }
 
-void c_array::randArrayDesc(int count)
+void Array::randArrayDesc(int count)
 {
 	if (count < 0) throw 0;
 
-	if (count > mem)
+	if (count > memory_)
 	{
-		delete A;
-		mem = count + DOP_MEM;
-		A = new int[mem];
+		delete array_;
+		memory_ = count + DOP_MEM;
+		array_ = new int[memory_];
 	}
-	n = count;
+	count_ = count;
 
-	A[0] = rand() % ((MAX_NUMBER / count) * 2);
-	for (int i = 1; i < n; i++) A[i] = A[i - 1] + (rand() % ((MAX_NUMBER / n) * 2));
-	return;
+	array_[0] = rand() % (MAX_NUMBER + 1);
+	for (int i = 1; i < count_; i++)
+	{
+		int newElem = rand() % (MAX_NUMBER + 1), j = 0;
+		
+		while ((j < i) && (array_[j] < newElem)) j++;
+		this->shiftRight(1, j, newElem);
+	}
 }
 
-void c_array::randArrayAsc(int count)
+void Array::randArrayAsc(int count)
 {
 	if (count < 0) throw 0;
 
-	if (count > mem)
+	if (count > memory_)
 	{
-		delete A;
-		mem = count + DOP_MEM;
-		A = new int[mem];
+		delete array_;
+		memory_ = count + DOP_MEM;
+		array_ = new int[memory_];
 	}
-	n = count;
+	count_ = count;
 
-	A[n - 1] = rand() % ((MAX_NUMBER / count) * 2);
-	for (int i = n - 2; i >= 0; i--) A[i] = A[i + 1] + (rand() % ((MAX_NUMBER / n) * 2));
-	return;
+	array_[0] = rand() % (MAX_NUMBER + 1);
+	for (int i = 1; i < count_; i++)
+	{
+		int newElem = rand() % (MAX_NUMBER + 1), j = 0;
+
+		while ((j < i) && (array_[j] > newElem)) j++;
+		this->shiftRight(1, j, newElem);
+	}
 }
+
 
 // взятие ссылки на элемент
-int& c_array::operator [](int index)
+int& Array::operator [](int index)
 {
-	if ((index < 0) || (index >= n)) throw 7;
-	return A[index];
+	if ((index < 0) || (index >= count_)) throw 7;
+	return array_[index];
 }
 
 // добавление ключа в начало
-c_array& c_array::operator +(int key)
+Array Array::operator +(int key)
 {
-	c_array* result = new c_array;
-	*result = *this;
-	result->shiftRightSave(1, 0);
-	result->A[0] = key;
-	return *result;
+	Array result(*this);
+	result.shiftRightSave(1, 0);
+	result.array_[0] = key;
+	return result;
 }
 
 // добавление ключа в конец
-c_array& c_array::operator +=(int key)
+void Array::operator +=(int key)
 {
-	c_array* result;
-
-	if (n + 1 > mem)
+	if (count_ + 1 > memory_)
 	{
-		int* a = new int[n + 1 + DOP_MEM];
+		int* a = new int[count_ + 1 + DOP_MEM];
 
-		for (int i = 0; i < n; i++) a[i] = A[i];
-		a[n + 1] = key;
+		for (int i = 0; i < count_; i++) a[i] = array_[i];
+		a[count_] = key;
 
-		result = new c_array;
-		result->A = a;
-		result->mem = n + 1 + DOP_MEM;
-		result->n = n + 1;
+		delete array_;
+		array_ = a;
+		memory_ = count_ + 1 + DOP_MEM;
+		count_ ++;
 	}
 	else
 	{
-		result = new c_array(*this);
-		result->A[n] = key;
-		result->n = n + 1;
+		array_[count_] = key;
+		count_++;
 	}
-	return *result;
 }
 
 
 // добавление массива в начало
-c_array& c_array::operator +(const c_array& Mas)
+Array Array::operator +(const Array& Mas)
 {
-	c_array* result = new c_array;
-	*result = *this;
-	result->shiftRightSave(Mas.n, 0);
-	for (int i = 0; i < Mas.n; i++) result->A[i] = Mas.A[i];
-	return *result;
+	Array result(*this);
+	result.shiftRightSave(Mas.count_, 0);
+	for (int i = 0; i < Mas.count_; i++) result.array_[i] = Mas.array_[i];
+	return result;
 }
 
 // добавление массива в конец
-c_array& c_array::operator +=(const c_array& Mas)
+void Array::operator +=(const Array& Mas)
 {
-	c_array* result;
 
-	if (n + Mas.n > mem)
+	if (count_ + Mas.count_ > memory_)
 	{
-		int* a = new int[n + Mas.n + DOP_MEM];
+		int* a = new int[count_ + Mas.count_ + DOP_MEM];
 
-		for (int i = 0; i < n; i++) a[i] = A[i];
-		for (int i = 0; i < Mas.n; i++) a[n + i] = Mas.A[i];
+		for (int i = 0; i < count_; i++) a[i] = array_[i];
+		for (int i = 0; i < Mas.count_; i++) a[count_ + i] = Mas.array_[i];
 
-		result = new c_array;
-		result->A = a;
-		result->mem = n + Mas.n + DOP_MEM;
-		result->n = n + Mas.n;
+		delete array_;
+		array_ = a;
+		memory_ = count_ + Mas.count_ + DOP_MEM;
+		count_ += Mas.count_;
 	}
 	else
 	{
-		result = new c_array(*this);
-		for (int i = 0; i < Mas.n; i++) result->A[n + i] = Mas.A[i];
-		result->n = n + Mas.n;
+		for (int i = 0; i < Mas.count_; i++) array_[count_ + i] = Mas.array_[i];
+		count_ += Mas.count_;
 	}
-	return *result;
 }
 
 //сравнение массивов
-bool c_array::operator ==(const c_array Mas)
+bool Array::operator ==(const Array& Mas)
 {
-	if (n = Mas.n)
+	if (count_ == Mas.count_)
 	{
-		for (int i = 0; i < n; i++)
-			if (A[i] != Mas.A[i])
+		for (int i = 0; i < count_; i++)
+			if (array_[i] != Mas.array_[i])
 				return false;
 		return true;
 	}
 	return false;
 }
 
-bool c_array::operator !=(const c_array Mas)
+bool Array::operator !=(const Array& Mas)
 {
-	if (n = Mas.n)
+	if (count_ == Mas.count_)
 	{
-		for (int i = 0; i < n; i++)
-			if (A[i] != Mas.A[i])
+		for (int i = 0; i < count_; i++)
+			if (array_[i] != Mas.array_[i])
 				return true;
 		return false;
 	}
@@ -466,37 +510,37 @@ bool c_array::operator !=(const c_array Mas)
 }
 
 //потоковый ввод-вывод
-ostream& operator <<(ostream& r, c_array& Mas)
+ostream& operator <<(ostream& r, Array& Mas)
 {
-	if (Mas.n > 0)
+	if (Mas.count_ > 0)
 	{
 		cout << "Array: ";
-		for (int i = 0; i < Mas.n; i++) r << Mas.A[i] << "  ";
-		r << "\n" << Mas.n << " slots out of " << Mas.mem << " occupied.\n\n";
+		for (int i = 0; i < Mas.count_; i++) r << Mas.array_[i] << "  ";
+		r << "\n" << Mas.count_ << " slots out of " << Mas.memory_ << " occupied.\n\n";
 	}
-	else r << "Array is empty. " << Mas.mem << " slots avilable.\n\n";
+	else r << "Array is empty. " << Mas.memory_ << " slots avilable.\n\n";
 	return r;
 }
 
-istream& operator >>(istream& r, c_array& Mas)
+istream& operator >>(istream& r, Array& Mas)
 {
 	cout << "Enter number of elements: ";
-	r >> Mas.n;
-	while (Mas.n < 0)
+	r >> Mas.count_;
+	while (Mas.count_ < 0)
 	{
 		cout << "Error. This number must >= 0. Enter here again: ";
-		r >> Mas.n;
+		r >> Mas.count_;
 	}
 
-	if (Mas.n > Mas.mem)
+	if (Mas.count_ > Mas.memory_)
 	{
-		delete Mas.A;
-		Mas.mem = Mas.n + DOP_MEM;
-		Mas.A = new int[Mas.mem];
+		delete Mas.array_;
+		Mas.memory_ = Mas.count_ + DOP_MEM;
+		Mas.array_ = new int[Mas.memory_];
 	}
 
 	cout << "Enter array(enter space between numbers): ";
-	for (int i = 0; i < Mas.n; i++) r >> Mas.A[i];
+	for (int i = 0; i < Mas.count_; i++) r >> Mas.array_[i];
 
 	return r;
 }
@@ -505,13 +549,11 @@ int main()
 {
 	srand(time(NULL));
 	int a[3] = { 1, 4, 3 };
-	c_array A(a, 4);
-	
+	Array A(a, 3);
 
-	A.randArray(20);
-
-	//cin >> A;
+	A.randArrayAsc(20);
 	cout << A;
 
-
+	cout << "\n" << A[A.findMinKey()] << " | " << A[A.findMaxKey()];
+	return 0;
 }
