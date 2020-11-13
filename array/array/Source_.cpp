@@ -1,127 +1,106 @@
 #include <iostream>
-#include <ctime>
 using namespace std;
 
 const int DEFAULT_MEM = 100; // количество элементов массива по умолчанию
 const int DOP_MEM = 10; // количество дополнительных элементов, создаваемых при выделении памяти 
-const int MAX_NUMBER = 99; // максимально возможный элемент массива при случайном заполнении
-const int EMPTY_ELEM = 0; // число, записываемое в  ячейки, для которых не определено конкретно что в них должно быть;
 
-/* коды исключений:
-конструктор с параметрами:
-0 - в конструктор введено отрицательное n
 
-addElem :
-1 - получена отрицательная позиция;
-
-swap :
-2 - первый операнд выходит за границы массива
-3 - второй операнд выходит за границы массива
-
-shiftRight :
-4 - нельзя сдвинуть на отрицательное число
-
-shiftRightSave :
-5 - нельзя сдвинуть на отрицательное число
-
-shiftLeft :
-6 - нельзя сдвинуть на отрицательное число 
-
-operator [] :
-7 - индекс выходит за границы массива
-
-operator - :
-8 - попытка удалить отрицательный индекс
-
-deleteIndex :
-9 - попытка удалить отрицательный индекс
-*/
-class Array
+enum ErrorCode
 {
-	int* array_;
+	errorCount_LessZero,           
+	errorIndexLessZero,
+	errorIndexOutsideArray,
+	errorCountLessZero,
+};
+
+template <class T> class Array
+{
+	T* array_;
 	int count_, memory_;
 
 public:
-	Array();
-	Array(int* a, int count);
-	Array(const Array& copy);
+	Array(int memory = DEFAULT_MEM);
+	Array(T* a, int count);
+	Array(const Array<T>& copy);
 
 	~Array() { delete array_; };
 
-	int findFirstKey(int key);
+	
+	int findFirstKey(T key);
 	int findMinKey();
 	int findMaxKey();
 
 	void input();
 	void output();
-
-	void addElem(int index, int key);
+	
+	void addElem(int index, T key);
 
 	void swap(int a, int b);
 	void sortingDesc();
 	void sortingAsc();
 
-	void shiftRight(int count, int index, int emptyElem = EMPTY_ELEM);
-	void shiftRightSave(int count, int index, int emptyElem = EMPTY_ELEM);
-	void shiftLeft(int count, int index, int emptyElem = EMPTY_ELEM);
-
-	Array operator -(int key);
-	void deleteKey(int key);
+	void shiftRight(int count, int index, T emptyElem);
+	void shiftRightSave(int count, int index, T emptyElem);
+	void shiftLeft(int count, int index, T emptyElem);
+	
+	Array<T> operator -(T key);
+	void deleteKey(T key);
 
 	void operator -=(int index);
 	void deleteIndex(int index);
 
-	void operator =(const Array& newArray);
+	Array<T>& operator =(const Array<T>& newArray);
 
-	void randArray(int count);
-	void randArrayDesc(int count);
-	void randArrayAsc(int count);
+	T& operator [](int index);
+	Array operator +(T key);
+	void operator +=(T key);
 
-	int& operator [](int index);
-	Array operator +(int key);
-	void operator +=(int key);
+	Array operator +(const Array<T>& Mas);
+	void operator +=(const Array<T>& Mas);
 
-	Array operator +(const Array& Mas);
-	void operator +=(const Array& Mas);
+	bool operator ==(const Array<T>& Mas);
+	bool operator !=(const Array<T>& Mas);
 
-	bool operator ==(const Array& Mas);
-	bool operator !=(const Array& Mas);
-
-	friend ostream& operator <<(ostream& r, Array& Mas);
-	friend istream& operator >>(istream& r, Array& Mas);
+	template <class T> friend ostream& operator <<(ostream& r, Array<T>& Mas);
+	template <class T> friend istream& operator >>(istream& r, Array<T>& Mas);
 };
 
 //конструктор по умолчанию
-Array::Array()
+template <class T>
+Array<T>::Array(int memory)
 {
-	array_ = new int[DEFAULT_MEM];
-	memory_ = DEFAULT_MEM;
+	array_ = new T[memory];
+	memory_ = memory;
 	count_ = 0;
 }
 
 //конструктор с параметрами
-Array::Array(int* a, int count)
+template <class T>
+Array<T>::Array(T* a, int count)
 {
-	if (count < 0) throw 0;
+	if (count < 0) throw errorCount_LessZero;
 
 	memory_ = count + DOP_MEM;
-	array_ = new int[memory_];
+	array_ = new T[memory_];
 	count_ = count;
 
 	for (int i = 0; i < count_; i++) array_[i] = a[i];
 }
 
 //конструктор копирования
-Array::Array(const Array& copy)
+template <class T>
+Array<T>::Array(const Array<T>& copy)
 {
 	memory_ = copy.memory_;
 	count_ = copy.count_;
-	array_ = new int[memory_];
+	array_ = new T[memory_];
 	for (int i = 0; i < count_; i++) array_[i] = copy.array_[i];
 }
 
-//поиск индекса первого вхождения числа
-int Array::findFirstKey(int key)
+
+//поиск индекса первого вхождения элемента
+template <class T>
+int Array<T>::findFirstKey(T key)
 {
 	for (int i = 0; i < count_; i++)
 		if (key == array_[i]) return i;
@@ -130,7 +109,8 @@ int Array::findFirstKey(int key)
 }
 
 //поиск минимального и максимального элемента(возвращают -1 если массив пуст)
-int Array::findMinKey()
+template <class T>
+int Array<T>::findMinKey()
 {
 	if (count_ == 0) return -1;
 
@@ -141,7 +121,8 @@ int Array::findMinKey()
 	return indexMin;
 }
 
-int Array::findMaxKey()
+template <class T>
+int Array<T>::findMaxKey()
 {
 	if (count_ == 0) return -1;
 
@@ -152,7 +133,8 @@ int Array::findMaxKey()
 	return indexMax;
 }
 //ввод-вывод (в консоль)
-void  Array::input()
+template <class T>
+void  Array<T>::input()
 {
 	cout << "Enter number of elements: ";
 	cin >> count_;
@@ -166,47 +148,48 @@ void  Array::input()
 	{
 		delete array_;
 		memory_ = count_ + DOP_MEM;
-		array_ = new int[memory_];
+		array_ = new T[memory_];
 	}
 
-	cout << "\nEnter array(enter space between numbers): ";
+	cout << "\nEnter array: ";
 	for (int i = 0; i < count_; i++) cin >> array_[i];
 }
 
-void  Array::output()
+template <class T>
+void  Array<T>::output()
 {
 	if (count_ > 0)
 	{
 		cout << "Array: ";
-		for (int i = 0; i < count_; i++) cout << array_[i] << "  ";
+		for (int i = 0; i < count_; i++) cout << array_[i] << ' ';
 		cout << "\n" << count_ << " slots out of " << memory_ << " occupied.\n\n";
 	}
 	else cout << "Array is empty. " << memory_ << " slots avilable.\n\n";
 }
 
 //добавление элемента на заданную позицию
-void Array::addElem(int index, int key)
+template <class T>
+void Array<T>::addElem(int index, T key)
 {
-	if (index < 0) throw 1;
+	if (index < 0) throw errorIndexLessZero;
 	
 	if (index < count_)
 	{
-		this->shiftRightSave(1, index);
-		array_[index] = key;
+		this->shiftRightSave(1, index, key);
 	}
 	else
 		if (index < memory_)
 		{
-			for (int i = count_; i < index; i++) array_[i] = EMPTY_ELEM;
+			//for (int i = count_; i < index; i++) array_[i] = EMPTY_ELEM;
 			count_ = index + 1;
 			array_[index] = key;
 		}
 		else
 			if(index >= memory_)
 			{
-				int* a = new int[index + DOP_MEM];
+				T* a = new T[index + DOP_MEM];
 				for (int i = 0; i < count_; i++) a[i] = array_[i];
-				for (int i = count_; i < index; i++) a[i] = EMPTY_ELEM;
+				//for (int i = count_; i < index; i++) a[i] = EMPTY_ELEM;
 				a[index] = key;
 				delete array_;
 				array_ = a;
@@ -216,25 +199,27 @@ void Array::addElem(int index, int key)
 }
 
 //меняются местами 2 элемента массива
-void Array::swap(int a, int b)
+template <class T>
+void Array<T>::swap(int a, int b)
 {
-	if ((a < 0) || (a >= count_)) throw 2;
-	if ((b < 0) || (b >= count_)) throw 3;
+	if ((a < 0) || (a >= count_) || (b < 0) || (b >= count_)) throw errorIndexOutsideArray;
 
-	int c = array_[a];
+	T c = array_[a];
 	array_[a] = array_[b];
 	array_[b] = c;
 }
 
 //сортировки (по убыванию и возрастанию)
-void Array::sortingDesc()
+template <class T>
+void Array<T>::sortingDesc()
 {
 	for (int i = count_ - 1; i > 0; i--)
 		for (int j = 0; j < i; j++)
 			if (array_[j] > array_[j + 1]) swap(j, j + 1);
 }
 
-void Array::sortingAsc()
+template <class T>
+void Array<T>::sortingAsc()
 {
 	for (int i = 0; i < count_; i++)
 		for (int j = count_ - 1; j > i; j--)
@@ -242,9 +227,10 @@ void Array::sortingAsc()
 }
 
 //сдвиг (вправо(+ версия сдвига вправо без потери элементов) и влево)
-void Array::shiftRight(int count, int index, int emptyElem)
+template <class T>
+void Array<T>::shiftRight(int count, int index, T emptyElem)
 {
-	if (count < 0) throw 4;
+	if (count < 0) throw errorCountLessZero;
 	if (count > count_ - index) count = count_ - index;
 
 	for (int i = count_ - 1; i >= (index + count); i--) array_[i] = array_[i - count];
@@ -252,15 +238,16 @@ void Array::shiftRight(int count, int index, int emptyElem)
 	for (int i = 0; i < count; i++) array_[index + i] = emptyElem;
 }
 
-void Array::shiftRightSave(int count, int index, int emptyElem)
+template <class T>
+void Array<T>::shiftRightSave(int count, int index, T emptyElem)
 {
-	if (count < 0) throw 5;
+	if (count < 0) throw errorCountLessZero;
 
 	if (count + count_ > memory_)
 	{
 		memory_ = count_ + count + DOP_MEM;
 		count_ += count;
-		int* newArr = new int[memory_];
+		T* newArr = new T[memory_];
 		int i = 0;
 
 		for (; i < index; i++) newArr[i] = array_[i];
@@ -278,9 +265,10 @@ void Array::shiftRightSave(int count, int index, int emptyElem)
 	}
 }
 
-void Array::shiftLeft(int count, int index, int emptyElem)
+template <class T>
+void Array<T>::shiftLeft(int count, int index, T emptyElem)
 {
-	if (count < 0) throw 6;
+	if (count < 0) throw errorCountLessZero;
 	if (count > index + 1) count = index + 1;
 
 	for (int i = 0; i <= (index - count); i++) array_[i] = array_[i + count];
@@ -289,10 +277,11 @@ void Array::shiftLeft(int count, int index, int emptyElem)
 }
 
 //удаление первого вхождения ключа
-Array Array::operator -(int key)
+template <class T>
+Array<T> Array<T>::operator -(T key)
 {
 	int index = this->findFirstKey(key);
-	Array result(*this);
+	Array<T> result(*this);
 
 	if (index != -1)
 	{
@@ -302,7 +291,8 @@ Array Array::operator -(int key)
 	return result;
 }
 
-void Array::deleteKey(int key)
+template <class T>
+void Array<T>::deleteKey(T key)
 {
 	int index = this->findFirstKey(key);
 
@@ -313,11 +303,11 @@ void Array::deleteKey(int key)
 	}
 }
 
-
+template <class T>
 //удаление элемента по идексу
-void Array::operator -=(int index)
+void Array<T>::operator -=(int index)
 {
-	if (index < 0) throw 8;
+	if (index < 0) throw errorIndexLessZero;
 
 	if (index < count_)
 	{
@@ -326,9 +316,10 @@ void Array::operator -=(int index)
 	}
 }
 
-void Array::deleteIndex(int index)
+template <class T>
+void Array<T>::deleteIndex(int index)
 {
-	if (index < 0) throw 9;
+	if (index < 0) throw errorIndexLessZero;
 
 	if (index < count_)
 	{
@@ -339,7 +330,8 @@ void Array::deleteIndex(int index)
 
 
 //операция присвоения
-void Array::operator =(const Array& newArray)
+template <class T>
+Array<T>& Array<T>::operator =(const Array& newArray)
 {
 	if (this != &newArray)
 	{
@@ -347,94 +339,36 @@ void Array::operator =(const Array& newArray)
 
 		memory_ = newArray.memory_;	
 		count_ = newArray.count_;	
-		array_ = new int[memory_];	
+		array_ = new T[memory_];	
 		for (int i = 0; i < count_; i++) array_[i] = newArray.array_[i];
 	}
+	return *this;
 }
-
-//заполнение массива случайными числами (полностью случайным, по возрастанию, по убыванию)
-void Array::randArray(int count)
-{
-	if (count < 0) throw 0;
-
-	if (count > memory_)
-	{
-		delete array_;
-		memory_ = count + DOP_MEM;
-		array_ = new int[memory_];
-	}
-
-	count_ = count;
-	for (int i = 0; i < count_; i++) array_[i] = rand() % (MAX_NUMBER + 1);
-}
-
-void Array::randArrayDesc(int count)
-{
-	if (count < 0) throw 0;
-
-	if (count > memory_)
-	{
-		delete array_;
-		memory_ = count + DOP_MEM;
-		array_ = new int[memory_];
-	}
-	count_ = count;
-
-	array_[0] = rand() % (MAX_NUMBER + 1);
-	for (int i = 1; i < count_; i++)
-	{
-		int newElem = rand() % (MAX_NUMBER + 1), j = 0;
-		
-		while ((j < i) && (array_[j] < newElem)) j++;
-		this->shiftRight(1, j, newElem);
-	}
-}
-
-void Array::randArrayAsc(int count)
-{
-	if (count < 0) throw 0;
-
-	if (count > memory_)
-	{
-		delete array_;
-		memory_ = count + DOP_MEM;
-		array_ = new int[memory_];
-	}
-	count_ = count;
-
-	array_[0] = rand() % (MAX_NUMBER + 1);
-	for (int i = 1; i < count_; i++)
-	{
-		int newElem = rand() % (MAX_NUMBER + 1), j = 0;
-
-		while ((j < i) && (array_[j] > newElem)) j++;
-		this->shiftRight(1, j, newElem);
-	}
-}
-
 
 // взятие ссылки на элемент
-int& Array::operator [](int index)
+template <class T>
+T& Array<T>::operator [](int index)
 {
-	if ((index < 0) || (index >= count_)) throw 7;
+	if ((index < 0) || (index >= count_)) throw errorIndexOutsideArray;
 	return array_[index];
 }
 
 // добавление ключа в начало
-Array Array::operator +(int key)
+template <class T>
+Array<T> Array<T>::operator +(T key)
 {
 	Array result(*this);
-	result.shiftRightSave(1, 0);
-	result.array_[0] = key;
+	result.shiftRightSave(1, 0, key);
 	return result;
 }
 
 // добавление ключа в конец
-void Array::operator +=(int key)
+template <class T>
+void Array<T>::operator +=(T key)
 {
 	if (count_ + 1 > memory_)
 	{
-		int* a = new int[count_ + 1 + DOP_MEM];
+		T* a = new T[count_ + 1 + DOP_MEM];
 
 		for (int i = 0; i < count_; i++) a[i] = array_[i];
 		a[count_] = key;
@@ -453,21 +387,27 @@ void Array::operator +=(int key)
 
 
 // добавление массива в начало
-Array Array::operator +(const Array& Mas)
+template <class T>
+Array<T> Array<T>::operator +(const Array<T>& Mas)
 {
 	Array result(*this);
-	result.shiftRightSave(Mas.count_, 0);
-	for (int i = 0; i < Mas.count_; i++) result.array_[i] = Mas.array_[i];
+	if (Mas.count_ != 0)
+	{	
+		result.shiftRightSave(Mas.count_, 0, Mas.array_[0]);	
+		for (int i = 1; i < Mas.count_; i++) result.array_[i] = Mas.array_[i];
+	}
+
 	return result;
 }
 
 // добавление массива в конец
-void Array::operator +=(const Array& Mas)
+template <class T>
+void Array<T>::operator +=(const Array<T>& Mas)
 {
 
 	if (count_ + Mas.count_ > memory_)
 	{
-		int* a = new int[count_ + Mas.count_ + DOP_MEM];
+		T* a = new T[count_ + Mas.count_ + DOP_MEM];
 
 		for (int i = 0; i < count_; i++) a[i] = array_[i];
 		for (int i = 0; i < Mas.count_; i++) a[count_ + i] = Mas.array_[i];
@@ -485,7 +425,8 @@ void Array::operator +=(const Array& Mas)
 }
 
 //сравнение массивов
-bool Array::operator ==(const Array& Mas)
+template <class T>
+bool Array<T>::operator ==(const Array<T>& Mas)
 {
 	if (count_ == Mas.count_)
 	{
@@ -497,7 +438,8 @@ bool Array::operator ==(const Array& Mas)
 	return false;
 }
 
-bool Array::operator !=(const Array& Mas)
+template <class T>
+bool Array<T>::operator !=(const Array<T>& Mas)
 {
 	if (count_ == Mas.count_)
 	{
@@ -510,7 +452,8 @@ bool Array::operator !=(const Array& Mas)
 }
 
 //потоковый ввод-вывод
-ostream& operator <<(ostream& r, Array& Mas)
+template <class T>
+ostream& operator <<(ostream& r, Array<T>& Mas)
 {
 	if (Mas.count_ > 0)
 	{
@@ -522,7 +465,8 @@ ostream& operator <<(ostream& r, Array& Mas)
 	return r;
 }
 
-istream& operator >>(istream& r, Array& Mas)
+template <class T>
+istream& operator >>(istream& r, Array<T>& Mas)
 {
 	cout << "Enter number of elements: ";
 	r >> Mas.count_;
@@ -536,24 +480,47 @@ istream& operator >>(istream& r, Array& Mas)
 	{
 		delete Mas.array_;
 		Mas.memory_ = Mas.count_ + DOP_MEM;
-		Mas.array_ = new int[Mas.memory_];
+		Mas.array_ = new T[Mas.memory_];
 	}
 
-	cout << "Enter array(enter space between numbers): ";
+	cout << "Enter array: ";
 	for (int i = 0; i < Mas.count_; i++) r >> Mas.array_[i];
 
 	return r;
 }
 
+
+
 int main()
 {
-	srand(time(NULL));
-	int a[3] = { 1, 4, 3 };
-	Array A(a, 3);
+	try
+	{
+		char W[7] = "winter";
+		char S[7] = "summer";
+		Array<char*> a(5);
+		
+		a += W;
+		a += S;
+		
+		cout << a;
 
-	A.randArrayAsc(20);
-	cout << A;
+		a.sortingDesc();
+		cout << a;
+		/*
 
-	cout << "\n" << A[A.findMinKey()] << " | " << A[A.findMaxKey()];
+		Array<char> w(W, 6);
+		Array<char> s(S, 6);
+		Array<Array<char>> b(5);
+
+		b += w;
+		b += s;
+
+		cout << b;*/
+	}
+	catch (ErrorCode a)
+	{
+		return a;
+	}
+	
 	return 0;
 }
